@@ -213,20 +213,21 @@ elif st.session_state.logged_in or DEBUG_MODE:
         if st.button("Sair", key="logout_button"):
             logout()
 
-    # ------------------------------------------------------------
+        # ------------------------------------------------------------
     # 🔹 Carregar planilhas principais
     # ------------------------------------------------------------
-    vendas_df = pd.read_excel("Esquadrão Minas.xlsx", sheet_name="Report")
+    vendas_df = pd.read_excel("Esquadrao_Minas.xlsx", sheet_name="Report")
     vendas_df.columns = [col.strip().upper() for col in vendas_df.columns]
     vendas_df = vendas_df.rename(columns={"VL TOTAL": "VENDAS"})
     vendas_df["NOME"] = vendas_df["RCA"].str.split().str[:1].str.join(' ')
 
-    metas_df = pd.read_excel("Metas Esquadrao Minas.xlsx", sheet_name="META VALOR")
+    metas_df = pd.read_excel("Metas_Esquadrao_Minas.xlsx", sheet_name="META VALOR")
     metas_df.columns = [col.strip().upper() for col in metas_df.columns]
     metas_df["NOME"] = metas_df["RCA"].str.split().str[:1].str.join(' ')
 
-    mfam = pd.read_excel("Metas Esquadrao Minas.xlsx", sheet_name="META FAMILIA")
+    mfam = pd.read_excel("Metas_Esquadrao_Minas.xlsx", sheet_name="META FAMILIA")
     mfam.columns = [col.strip().upper() for col in mfam.columns]
+
 
     # ------------------------------------------------------------
     # 🔹 Consolidar e calcular % de meta

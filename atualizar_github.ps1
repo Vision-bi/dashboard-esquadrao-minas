@@ -1,25 +1,17 @@
-# =============================================
-# 🚀 Atualizador automático do GitHub - Esquadrão Minas
-# =============================================
+Write-Host "🚀 Iniciando atualização do repositório..." -ForegroundColor Cyan
 
-cd "C:\Vision\dashboard_esquadrao"
+# Garante que estamos na pasta correta
+Set-Location "C:\Vision\dashboard_esquadrao"
 
-# Evita subir venv, caches e temporários
-$env:GIT_PAGER = ''
-Write-Host "🔍 Limpando arquivos ignorados e preparando commit..." -ForegroundColor Cyan
-git rm -r --cached venv 2>$null
-git rm --cached desktop.ini 2>$null
-
-# Adiciona alterações reais
+# Adiciona e comita mudanças
 git add .
+$mensagem = Read-Host "✍️ Digite uma mensagem de commit (pressione Enter para padrão)"
+if ([string]::IsNullOrWhiteSpace($mensagem)) {
+    $mensagem = "🔄 Atualização automática do painel Esquadrão Minas"
+}
+git commit -m $mensagem
 
-# Cria commit automático com data e hora
-$hora = Get-Date -Format "dd/MM/yyyy HH:mm"
-git commit -m "Atualização automática em $hora" 2>$null
-
-# Envia para o repositório remoto
-Write-Host "🚀 Enviando atualizações para o GitHub..." -ForegroundColor Green
+# Envia para o GitHub
 git push origin principal
 
-Write-Host "`n✅ Atualização concluída com sucesso!" -ForegroundColor Yellow
-Pause
+Write-Host "✅ Repositório atualizado com sucesso!" -ForegroundColor Green

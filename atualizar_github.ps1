@@ -1,44 +1,74 @@
-Write-Host "🚀 Iniciando atualização do repositório do painel Esquadrão Minas..." -ForegroundColor Cyan
+# ============================================================
+# Script: atualizar_github.ps1
+# Função: Atualiza o repositório do painel Esquadrão Minas
+# ============================================================
 
-# 1️⃣ Garante que estamos na pasta correta
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+Write-Host ""
+Write-Host "=== Atualizando repositório do painel Esquadrão Minas ===" -ForegroundColor Cyan
 Set-Location "C:\Vision\dashboard_esquadrao"
 
-# 2️⃣ Exibe status atual do repositório
-git status
-
-# 3️⃣ Adiciona e comita as alterações
-git add .
-$mensagem = Read-Host "✍️ Digite uma mensagem de commit (pressione Enter para usar padrão)"
-if ([string]::IsNullOrWhiteSpace($mensagem)) {
-    $mensagem = "🔄 Atualização automática do painel Esquadrão Minas"
-}
-
-git commit -m $mensagem
-
-# 4️⃣ Envia tudo para o GitHub (branch principal)
-Write-Host "`n📤 Enviando alterações para o GitHub..." -ForegroundColor Yellow
-git push origin principal
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Erro ao enviar para o GitHub. Verifique a conexão ou as credenciais." -ForegroundColor Red
-    exit
-}
-
-# 5️⃣ Força atualização do Streamlit Cloud (redeploy automático)
-Write-Host "`n☁️ Solicitando atualização do app no Streamlit Cloud..." -ForegroundColor Yellow
-
-try {
-    $url = "https://dashboard-esquadrao-minas.streamlit.app/"
-    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
-    if ($response.StatusCode -eq 200) {
-        Write-Host "✅ Deploy do Streamlit Cloud verificado com sucesso!" -ForegroundColor Green
+# 1️⃣ Ativa o ambiente virtual (se existir)
+if (-not ($env:VIRTUAL_ENV)) {
+    $venvPath = "C:\Vision\dashboard_esquadrao\venv\Scripts\Activate.ps1"
+    if (Test-Path $venvPath) {
+        Write-Host "Ativando ambiente virtual..." -ForegroundColor Yellow
+        & $venvPath
     } else {
-        Write-Host "⚠️ Streamlit respondeu com código $($response.StatusCode), mas o push foi feito." -ForegroundColor Yellow
+        Write-Host "Aviso: ambiente virtual não encontrado em $venvPath" -ForegroundColor Yellow
     }
 }
-catch {
-    Write-Host "ℹ️ Push realizado, mas o Streamlit pode demorar até 1 minuto para atualizar automaticamente." -ForegroundColor Yellow
+
+# 2️⃣ Exibe o status do repositório
+Write-Host "`nVerificando status do repositório..." -ForegroundColor DarkCyan
+git status
+
+# 3️⃣ Adiciona alterações
+git add .
+
+# 4️⃣ Verifica se há algo a commitar
+$hasChanges = (git status --porcelain)
+if (-not $hasChanges) {
+    Write-Host "`nNenhuma alteração detectada. O repositório já está atualizado." -ForegroundColor Yellow
+    exit 0
 }
 
-# 6️⃣ Mensagem final
-Write-Host "`n🎯 Processo concluído com sucesso! Painel e repositório sincronizados." -ForegroundColor Green
+# 5️⃣ Pede mensagem de commit
+$mensagem = Read-Host "Digite uma mensagem de commit (pressione Enter para usar a padrão)"
+if ([string]::IsNullOrWhiteSpace($mensagem)) {
+    $mensagem = "Atualização automática do painel Esquadrão Minas"
+}
+
+git commit -m $mensagem | Out-Null
+
+# 6️⃣ Faz o push para o GitHub
+Write-Host "`nEnviando alterações para o GitHub..." -ForegroundColor Yellow
+$pushResult = git push origin principal 2>&1
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Erro ao enviar para o GitHub:" -ForegroundColor Red
+    Write-Host $pushResult -ForegroundColor DarkRed
+    exit 1
+}
+
+Write-Host "Push realizado com sucesso para a branch principal!" -ForegroundColor Green
+
+# 7️⃣ Solicita atualização no Streamlit Cloud
+Write-Host "`nVerificando atualização no Streamlit Cloud..." -ForegroundColor Yellow
+$url = "https://dashboard-esquadrao-minas.streamlit.app/"
+
+try {
+    $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
+    if ($response.StatusCode -eq 200) {
+        Write-Host "Streamlit respondeu com sucesso (HTTP 200)!" -ForegroundColor Green
+    } else {
+        Write-Host "Streamlit respondeu com código $($response.StatusCode). O app deve atualizar em breve." -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "Push feito, mas o Streamlit pode levar até 1 minuto para atualizar automaticamente." -ForegroundColor Yellow
+}
+
+# 8️⃣ Finalização
+Write-Host "`nProcesso concluído com sucesso! Painel e repositório sincronizados." -ForegroundColor Green
+Write-Host "==============================================================="

@@ -1,12 +1,16 @@
 # ==========================
 # SCRIPT: publicar.ps1
-# Atualiza o repositório no GitHub
+# Atualiza o repositório no GitHub — força atualização da planilha e demais arquivos
 # ==========================
 
-Write-Host "🚀 Iniciando publicação no GitHub..." -ForegroundColor Cyan
+Write-Host "`n=== Publicando alterações no GitHub ===`n" -ForegroundColor Cyan
+
+# Caminho do projeto
+$projeto = "C:\Vision\dashboard_esquadrao"
+Set-Location $projeto
 
 # Ativar ambiente virtual (se existir)
-$venvPath = "C:\Vision\dashboard_esquadrao\venv\Scripts\Activate.ps1"
+$venvPath = "$projeto\venv\Scripts\Activate.ps1"
 if (Test-Path $venvPath) {
     Write-Host "Ativando ambiente virtual..."
     & $venvPath
@@ -14,25 +18,36 @@ if (Test-Path $venvPath) {
     Write-Host "⚠️ Ambiente virtual não encontrado, pulando ativação."
 }
 
-# Entrar no diretório do projeto
-Set-Location "C:\Vision\dashboard_esquadrao"
+# Forçar atualização de arquivos importantes
+$arquivos = @(
+    "Esquadrao.xlsx",
+    "Metas Esquadrao Minas.xlsx",
+    "campanha_flag.json",
+    "App_completo.py"
+)
 
-# Mostrar status
-git status
+foreach ($arq in $arquivos) {
+    if (Test-Path $arq) {
+        Write-Host "🔁 Forçando atualização de: $arq"
+        git add --force "$arq"
+    } else {
+        Write-Host "⚠️ Arquivo não encontrado: $arq"
+    }
+}
 
-# Adicionar todas as mudanças
+# Adicionar todas as outras mudanças também
 git add -A
 
-# Criar commit automático com data/hora
-$mensagem = "Atualização automática em $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
+# Commit automático com data/hora
+$mensagem = "Atualização forçada em $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
 git commit -m $mensagem
 
-# Puxar possíveis mudanças do GitHub e rebasear
+# Sincronizar com o GitHub
+Write-Host "⬇️  Puxando alterações do remoto..."
 git pull origin principal --rebase
 
-# Enviar alterações
+Write-Host "⬆️  Enviando alterações..."
 git push origin principal
 
-# Mostrar status final
-Write-Host "✅ Publicação concluída com sucesso!" -ForegroundColor Green
+Write-Host "`n✅ Publicação concluída com sucesso!" -ForegroundColor Green
 git status

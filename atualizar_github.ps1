@@ -1,6 +1,7 @@
 # ==========================
 # SCRIPT: atualizar_github.ps1
-# Atualiza o repositorio no GitHub — forca atualizacao das planilhas e arquivos principais
+# Atualiza automaticamente o repositório no GitHub,
+# incluindo todas as planilhas (.xlsx) e arquivos principais.
 # ==========================
 
 Write-Host "`n=== Publicando alteracoes no GitHub ===`n" -ForegroundColor Cyan
@@ -25,21 +26,34 @@ if (-not $branchAtual) {
 }
 Write-Host "Branch atual: $branchAtual"
 
-# Forcar atualizacao de arquivos importantes
-$arquivos = @(
-    "Esquadrao.xlsx",
-    "Metas Esquadrao Minas.xlsx",
+# Buscar automaticamente todos os arquivos .xlsx no diretorio
+$planilhas = Get-ChildItem -Path $projeto -Filter *.xlsx -File | Where-Object {
+    $_.Name -notmatch '^~' -and $_.Name -notmatch '^\.'
+}
+
+# Arquivos fixos adicionais
+$arquivosFixos = @(
     "campanha_flag.json",
     "App_completo.py"
 )
 
-foreach ($arq in $arquivos) {
-    if (Test-Path $arq) {
-        Write-Host "Adicionando arquivo: $arq"
-        git add --force "$arq"
-    } else {
-        Write-Host "Aviso: arquivo nao encontrado -> $arq"
+# Combinar todos os arquivos alvo
+$arquivos = @()
+$arquivos += $planilhas.FullName
+foreach ($fixo in $arquivosFixos) {
+    if (Test-Path $fixo) {
+        $arquivos += (Resolve-Path $fixo)
     }
+}
+
+# Mostrar lista de arquivos que serao adicionados
+Write-Host "`nArquivos que serao atualizados:" -ForegroundColor Yellow
+$arquivos | ForEach-Object { Write-Host " - $($_)" }
+
+# Adicionar os arquivos ao Git
+foreach ($arq in $arquivos) {
+    Write-Host "Adicionando: $arq"
+    git add --force "$arq"
 }
 
 # Adicionar todas as outras mudancas tambem
@@ -50,7 +64,7 @@ $alteracoes = git status --porcelain
 if (-not [string]::IsNullOrWhiteSpace($alteracoes)) {
 
     # Commit automatico com data/hora
-    $mensagem = "Atualizacao forcada em $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
+    $mensagem = "Atualizacao automatica em $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
     git commit -m $mensagem
 
     # Sincronizar com o GitHub

@@ -1,5 +1,5 @@
 # ================================================================
-# 🚀 ATUALIZAR GITHUB + BACKUP AUTOMÁTICO
+# 🚀 ATUALIZAR GITHUB + BACKUP AUTOMÁTICO + EXECUTAR STREAMLIT
 # Projeto: Dashboard Esquadrão Minas
 # ================================================================
 
@@ -23,15 +23,18 @@ $backupFile = Join-Path $backupDir "backup_esquadrao_$data.zip"
 
 Write-Host "`n🗂️ Criando backup do projeto..." -ForegroundColor Yellow
 
-$excluir = @("venv", ".git", ".streamlit", "backups", "__pycache__", "*.log")
+# Excluir pastas desnecessárias do backup
+$excluir = @("venv", ".git", "backups", "__pycache__", ".streamlit", "*.log")
 
+# Inclui apenas arquivos relevantes do projeto
 $arquivos = Get-ChildItem -Path $projeto -Recurse -File |
     Where-Object {
-        $ok = $true
+        $fullName = $_.FullName.ToLower()
+        $naoExcluir = $true
         foreach ($ex in $excluir) {
-            if ($_.FullName -like "*\$ex*") { $ok = $false; break }
+            if ($fullName -like "*$ex*") { $naoExcluir = $false; break }
         }
-        $ok
+        $naoExcluir -and ($_.Extension -match "^\.(py|ps1|json|txt|html|css|js|png|ico|xlsx|csv|md)$")
     }
 
 Compress-Archive -Path $arquivos.FullName -DestinationPath $backupFile -Force
@@ -40,8 +43,6 @@ Write-Host "✅ Backup criado com sucesso em:`n$backupFile" -ForegroundColor Gre
 # ================================================================
 # 🧠 GIT - ATUALIZAÇÃO DO REPOSITÓRIO
 # ================================================================
-
-# Ativa o ambiente virtual se existir
 $venv = "$projeto\venv\Scripts\Activate.ps1"
 if (Test-Path $venv) {
     Write-Host "`n🔧 Ativando ambiente virtual..." -ForegroundColor Yellow
@@ -51,9 +52,9 @@ if (Test-Path $venv) {
 Write-Host "`n📂 Verificando status do repositório..." -ForegroundColor Cyan
 git status
 
-# Força adicionar arquivos importantes, mesmo se ignorados
+# Corrigido: removeu vírgulas e restringiu tipos de arquivos
 Write-Host "`n📄 Adicionando planilhas e scripts atualizados..." -ForegroundColor Yellow
-git add -f *.xlsx, *.py, *.json, *.ps1, *.png, *.ico, *.txt
+git add -f *.xlsx *.py *.json *.ps1 *.png *.ico *.txt *.html *.css *.js *.csv *.md
 
 # Commit
 $mensagem = Read-Host "`nDigite uma mensagem de commit (ou pressione Enter para padrão)"
@@ -61,9 +62,21 @@ if (-not $mensagem) { $mensagem = "Atualização automática com backup" }
 
 git commit -m "$mensagem"
 
-# Push para o GitHub
+# Push
 Write-Host "`n☁️ Enviando alterações para o GitHub..." -ForegroundColor Cyan
 git push origin principal
 
 Write-Host "`n✅ Atualização concluída com sucesso!" -ForegroundColor Green
 Write-Host "Repositório e backup sincronizados.`n"
+
+# ================================================================
+# 🧠 OPCIONAL: EXECUTAR STREAMLIT AUTOMATICAMENTE
+# ================================================================
+$streamlitApp = Join-Path $projeto "App_completo.py"
+
+if (Test-Path $streamlitApp) {
+    Write-Host "`n🚀 Iniciando o painel Streamlit..." -ForegroundColor Cyan
+    streamlit run $streamlitApp
+} else {
+    Write-Host "`n⚠️ Arquivo App_completo.py não encontrado. Streamlit não iniciado." -ForegroundColor Yellow
+}

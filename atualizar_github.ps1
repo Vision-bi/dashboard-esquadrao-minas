@@ -32,7 +32,10 @@ $arquivos = Get-ChildItem -Path $projeto -Recurse -File |
         $fullName = $_.FullName.ToLower()
         $naoExcluir = $true
         foreach ($ex in $excluir) {
-            if ($fullName -like "*$ex*") { $naoExcluir = $false; break }
+            if ($fullName -like "*$ex*") { 
+                $naoExcluir = $false
+                break
+            }
         }
         $naoExcluir -and ($_.Extension -match "^\.(py|ps1|json|txt|html|css|js|png|ico|xlsx|csv|md)$")
     }
@@ -44,6 +47,7 @@ Write-Host "✅ Backup criado com sucesso em:`n$backupFile" -ForegroundColor Gre
 # 🧠 GIT - ATUALIZAÇÃO DO REPOSITÓRIO
 # ================================================================
 $venv = "$projeto\venv\Scripts\Activate.ps1"
+
 if (Test-Path $venv) {
     Write-Host "`n🔧 Ativando ambiente virtual..." -ForegroundColor Yellow
     & $venv
@@ -52,13 +56,14 @@ if (Test-Path $venv) {
 Write-Host "`n📂 Verificando status do repositório..." -ForegroundColor Cyan
 git status
 
-# Corrigido: removeu vírgulas e restringiu tipos de arquivos
 Write-Host "`n📄 Adicionando planilhas e scripts atualizados..." -ForegroundColor Yellow
 git add -f *.xlsx *.py *.json *.ps1 *.png *.ico *.txt *.html *.css *.js *.csv *.md
 
 # Commit
 $mensagem = Read-Host "`nDigite uma mensagem de commit (ou pressione Enter para padrão)"
-if (-not $mensagem) { $mensagem = "Atualização automática com backup" }
+if (-not $mensagem) { 
+    $mensagem = "Atualização automática com backup" 
+}
 
 git commit -m "$mensagem"
 
@@ -70,13 +75,14 @@ Write-Host "`n✅ Atualização concluída com sucesso!" -ForegroundColor Green
 Write-Host "Repositório e backup sincronizados.`n"
 
 # ================================================================
-# 🧠 OPCIONAL: EXECUTAR STREAMLIT AUTOMATICAMENTE
+# 🧠 EXECUTAR STREAMLIT AUTOMATICAMENTE
 # ================================================================
 $streamlitApp = Join-Path $projeto "App_completo.py"
 
 if (Test-Path $streamlitApp) {
     Write-Host "`n🚀 Iniciando o painel Streamlit..." -ForegroundColor Cyan
     streamlit run $streamlitApp
-} else {
+} 
+else {
     Write-Host "`n⚠️ Arquivo App_completo.py não encontrado. Streamlit não iniciado." -ForegroundColor Yellow
 }

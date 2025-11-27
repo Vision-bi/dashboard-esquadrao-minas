@@ -1,16 +1,16 @@
-# ================================================================
-# 🚀 ATUALIZAR GITHUB + BACKUP AUTOMÁTICO + EXECUTAR STREAMLIT
+# FILE: atualizar_github.ps1
+# ---------------------------------------------------------------
+# 🚀 Atualizar GitHub + Backup Automático + Rodar Streamlit
 # Projeto: Dashboard Esquadrão Minas
-# ================================================================
+# ---------------------------------------------------------------
 
-# Garante que o console use UTF-8 (corrige acentuação)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "`n=== 🚀 Atualizando repositório do painel Esquadrão Minas ===" -ForegroundColor Cyan
 
-# ================================================================
-# 🧩 BACKUP AUTOMÁTICO
-# ================================================================
+# ---------------------------------------------------------------
+# 📦 BACKUP AUTOMÁTICO
+# ---------------------------------------------------------------
 $projeto = "C:\Vision\dashboard_esquadrao"
 $backupDir = Join-Path $projeto "backups"
 
@@ -23,66 +23,60 @@ $backupFile = Join-Path $backupDir "backup_esquadrao_$data.zip"
 
 Write-Host "`n🗂️ Criando backup do projeto..." -ForegroundColor Yellow
 
-# Excluir pastas desnecessárias do backup
+# Arquivos válidos para backup (exclui venv, .git, backups, logs)
 $excluir = @("venv", ".git", "backups", "__pycache__", ".streamlit", "*.log")
 
-# Inclui apenas arquivos relevantes do projeto
 $arquivos = Get-ChildItem -Path $projeto -Recurse -File |
     Where-Object {
         $fullName = $_.FullName.ToLower()
-        $naoExcluir = $true
+        $permitido = $true
+
         foreach ($ex in $excluir) {
-            if ($fullName -like "*$ex*") { 
-                $naoExcluir = $false
-                break
-            }
+            if ($fullName -like "*$ex*") { $permitido = $false; break }
         }
-        $naoExcluir -and ($_.Extension -match "^\.(py|ps1|json|txt|html|css|js|png|ico|xlsx|csv|md)$")
+
+        # Apenas tipos relevantes
+        $permitido -and ($_.Extension -match "^\.(py|ps1|json|txt|html|css|js|png|ico|xlsx|csv|md)$")
     }
 
 Compress-Archive -Path $arquivos.FullName -DestinationPath $backupFile -Force
-Write-Host "✅ Backup criado com sucesso em:`n$backupFile" -ForegroundColor Green
+Write-Host "✅ Backup criado com sucesso:`n$backupFile" -ForegroundColor Green
 
-# ================================================================
-# 🧠 GIT - ATUALIZAÇÃO DO REPOSITÓRIO
-# ================================================================
-$venv = "$projeto\venv\Scripts\Activate.ps1"
 
-if (Test-Path $venv) {
-    Write-Host "`n🔧 Ativando ambiente virtual..." -ForegroundColor Yellow
-    & $venv
-}
-
+# ---------------------------------------------------------------
+# 🔧 GIT - ATUALIZAÇÃO
+# ---------------------------------------------------------------
 Write-Host "`n📂 Verificando status do repositório..." -ForegroundColor Cyan
 git status
 
-Write-Host "`n📄 Adicionando planilhas e scripts atualizados..." -ForegroundColor Yellow
-git add -f *.xlsx *.py *.json *.ps1 *.png *.ico *.txt *.html *.css *.js *.csv *.md
+
+# Adicionar somente arquivos úteis
+Write-Host "`n📄 Adicionando alterações..." -ForegroundColor Yellow
+git add *.py *.json *.ps1 *.png *.ico *.txt *.html *.css *.js *.csv *.md *.xlsx
+
 
 # Commit
-$mensagem = Read-Host "`nDigite uma mensagem de commit (ou pressione Enter para padrão)"
-if (-not $mensagem) { 
-    $mensagem = "Atualização automática com backup" 
-}
+$mensagem = Read-Host "`nDigite a mensagem do commit (Enter para padrão)"
+if (-not $mensagem) { $mensagem = "Atualização automática + backup" }
 
 git commit -m "$mensagem"
+
 
 # Push
 Write-Host "`n☁️ Enviando alterações para o GitHub..." -ForegroundColor Cyan
 git push origin principal
 
-Write-Host "`n✅ Atualização concluída com sucesso!" -ForegroundColor Green
-Write-Host "Repositório e backup sincronizados.`n"
+Write-Host "`n✅ GitHub atualizado com sucesso!" -ForegroundColor Green
 
-# ================================================================
-# 🧠 EXECUTAR STREAMLIT AUTOMATICAMENTE
-# ================================================================
-$streamlitApp = Join-Path $projeto "App_completo.py"
+
+# ---------------------------------------------------------------
+# ▶️ EXECUTAR STREAMLIT
+# ---------------------------------------------------------------
+$streamlitApp = Join-Path $projeto "app.py"
 
 if (Test-Path $streamlitApp) {
     Write-Host "`n🚀 Iniciando o painel Streamlit..." -ForegroundColor Cyan
     streamlit run $streamlitApp
-} 
-else {
-    Write-Host "`n⚠️ Arquivo App_completo.py não encontrado. Streamlit não iniciado." -ForegroundColor Yellow
+} else {
+    Write-Host "`n⚠️ Arquivo app.py não encontrado. Streamlit não iniciado." -ForegroundColor Yellow
 }

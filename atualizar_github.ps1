@@ -1,6 +1,17 @@
 # ================================================================
-# 🚀 ATUALIZAR GITHUB + BACKUP AUTOMÁTICO + EXECUTAR STREAMLIT
-# Projeto: Dashboard Esquadrão Minas
+# CAMINHO: C:\Vision\dashboard_esquadrao\
+# ARQUIVO: atualizar_github.ps1
+#
+# DESCRIÇÃO:
+# Atualiza o repositório GitHub do Dashboard Esquadrão Minas,
+# criando backup automático e executando Streamlit se aplicável.
+#
+# RESPONSABILIDADES:
+# - Criar backup zipado do projeto
+# - Versionar corretamente arquivos alterados
+# - Forçar commit de planilhas Excel
+# - Enviar alterações ao GitHub
+# - Executar Streamlit se App_completo.py existir
 # ================================================================
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -10,19 +21,18 @@ Write-Host "`n=== 🚀 Atualizando repositório do painel Esquadrão Minas ===" 
 # ================================================================
 # 🗂️ BACKUP AUTOMÁTICO
 # ================================================================
-$projeto = "C:\Vision\dashboard_esquadrao"
+$projeto   = "C:\Vision\dashboard_esquadrao"
 $backupDir = Join-Path $projeto "backups"
 
 if (!(Test-Path $backupDir)) {
     New-Item -ItemType Directory -Path $backupDir | Out-Null
 }
 
-$data = Get-Date -Format "yyyyMMdd_HHmmss"
+$data       = Get-Date -Format "yyyyMMdd_HHmmss"
 $backupFile = Join-Path $backupDir "backup_esquadrao_$data.zip"
 
 Write-Host "`n🗂️ Criando backup do projeto..." -ForegroundColor Yellow
 
-# Pastas a ignorar no backup
 $excluir = @(
     "venv",
     ".git",
@@ -32,7 +42,6 @@ $excluir = @(
     "*.log"
 )
 
-# Arquivos permitidos no backup
 $extensoesValidas = @(
     ".py", ".ps1", ".json", ".txt", ".html", ".css",
     ".js", ".png", ".ico", ".xlsx", ".csv", ".md"
@@ -60,17 +69,15 @@ git status
 
 Write-Host "`n📄 Adicionando arquivos alterados..." -ForegroundColor Yellow
 
-# Adicionar apenas arquivos que realmente existem
-foreach ($ext in $extensoesValidas) {
-    $lista = Get-ChildItem -Path $projeto -Recurse -File -Filter "*$ext" | Select-Object -ExpandProperty FullName
-    if ($lista.Count -gt 0) {
-        git add -f $lista
-    }
-}
+# 🔒 Estratégia segura (SEM estouro de path)
+git add -u
+git add *.xlsx
 
 # Commit
 $mensagem = Read-Host "`nDigite a mensagem do commit (Enter para padrão)"
-if (-not $mensagem) { $mensagem = "Atualização automática com backup" }
+if (-not $mensagem) {
+    $mensagem = "Atualização automática com backup"
+}
 
 git commit -m "$mensagem"
 
@@ -82,7 +89,7 @@ Write-Host "`n✅ Atualização concluída com sucesso!" -ForegroundColor Green
 Write-Host "Repositório e backup sincronizados.`n"
 
 # ================================================================
-# ▶️ EXECUTAR STREAMLIT SE EXISTIR O ARQUIVO App_completo.py
+# ▶️ EXECUTAR STREAMLIT
 # ================================================================
 $streamlitApp = Join-Path $projeto "App_completo.py"
 
